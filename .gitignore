@@ -1,0 +1,5 @@
+.env
+notifier.db
+__pycache__/
+.cache
+.venv/
