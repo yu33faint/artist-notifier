@@ -65,41 +65,61 @@ def read_root(request: Request):
         context={"artist_names": artist_names}
     )
 
-# ② アーティストの登録処理
+# ==========================================
+# ② バックエンド（名前での検索・登録処理）
+# ==========================================
+# 引数の名前を artist_name に変更
+# ==========================================
+# ② バックエンド（名前での検索・登録処理）
+# ==========================================
+# ★追加: 引数に request: Request を追加した
 @app.post("/api/register")
-def register_artist(artist_id: str = Form(...)):
+def register_artist(request: Request, artist_name: str = Form(...)):
     sp = get_spotify_client()
     try:
-        artist_info = sp.artist(artist_id)
-        artist_name = artist_info['name']
-    except Exception:
-        return {"status": "error", "message": "無効なIDか、Spotifyでアーティストが見つかりませんでした。"}
+        search_result = sp.search(q=artist_name, type='artist', limit=1)
+        artists_found = search_result['artists']['items']
+        
+        if not artists_found:
+            # ★変更: JSONではなく、HTMLテンプレートにメッセージを渡して返す
+            return templates.TemplateResponse(request=request, name="result.html", context={"message": f"「{artist_name}」に一致するアーティストが見つかりませんでした。"})
+            
+        exact_artist = artists_found[0]
+        artist_id = exact_artist['id']
+        formal_name = exact_artist['name']
+        
+    except Exception as e:
+        return templates.TemplateResponse(request=request, name="result.html", context={"message": f"Spotify検索中にエラーが発生しました: {e}"})
 
     conn = sqlite3.connect('notifier.db')
     cursor = conn.cursor()
     try:
-        cursor.execute("INSERT INTO artists (id, name) VALUES (?, ?)", (artist_id, artist_name))
+        cursor.execute("INSERT INTO artists (id, name) VALUES (?, ?)", (artist_id, formal_name))
         conn.commit()
-        result = {"status": "success", "message": f"「{artist_name}」を監視リストに登録しました！"}
+        msg = f"Spotifyから「{formal_name}」を発見！監視リストに登録しました。"
     except sqlite3.IntegrityError:
-        result = {"status": "error", "message": "そのアーティストは既に登録されています。"}
+        msg = f"「{formal_name}」は既に登録されています。"
     finally:
         conn.close()
     
-    return result
+    # ★変更: 最終的な結果も、HTMLテンプレートで返す
+    return templates.TemplateResponse(request=request, name="result.html", context={"message": msg})
 
-# ③ 全アーティストの新着チェック処理
+
+# ==========================================
+# ③ バックエンド（全チェックと通知処理）
+# ==========================================
+# ★追加: 引数に request: Request を追加した
 @app.post("/api/check")
-def run_check():
+def run_check(request: Request):
     conn = sqlite3.connect('notifier.db')
     cursor = conn.cursor()
-    
     cursor.execute("SELECT id, name FROM artists")
     artists = cursor.fetchall()
     
     if not artists:
         conn.close()
-        return {"status": "error", "message": "アーティストが1人も登録されていません。"}
+        return templates.TemplateResponse(request=request, name="result.html", context={"message": "アーティストが1人も登録されていません。"})
 
     sp = get_spotify_client()
     new_releases = []
@@ -126,12 +146,12 @@ def run_check():
     conn.commit()
     conn.close()
 
+    # ★変更: LINE通知の有無にかかわらず、結果をHTMLテンプレートで返す
     if new_releases:
         message_text = "🔥新着アラート!!🔥\n\n" + "\n\n".join(new_releases)
         send_line_message(message_text)
-        return {"status": "success", "message": f"{len(new_releases)}件の新着をLINEに通知しました！"}
+        return templates.TemplateResponse(request=request, name="result.html", context={"message": f"{len(new_releases)}件の新着をLINEに通知しました！"})
     else:
-        return {"status": "success", "message": "新着はありませんでした。"}
-
+        return templates.TemplateResponse(request=request, name="result.html", context={"message": "全アーティストをチェックしましたが、新着はありませんでした。"})
 
 
