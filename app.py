@@ -1,15 +1,13 @@
 import os
 import sqlite3
 import requests
-from fastapi import FastAPI, Form, Request
-from fastapi.templating import Jinja2Templates
+from fastapi import FastAPI
 from dotenv import load_dotenv
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
-
-# ★追加：タイマー機能と、サーバーの起動・終了を管理するツール
 from apscheduler.schedulers.background import BackgroundScheduler
 from contextlib import asynccontextmanager
+from pydantic import BaseModel
 
 load_dotenv()
 
@@ -39,7 +37,7 @@ def init_db():
     conn.close()
 
 # ==========================================
-# ★新設：コアロジック（タイマーからもボタンからも呼ばれる）
+# コアロジック（タイマーからもAPIからも呼ばれる）
 # ==========================================
 def execute_spotify_check():
     print("🤖 [自動実行] Spotifyの新着チェックを開始します...")
@@ -88,59 +86,50 @@ def execute_spotify_check():
         print("🤖 [結果] 新着はありませんでした。")
         return "全アーティストをチェックしましたが、新着はありませんでした。"
 
-
 # ==========================================
-# ★新設：サーバーの「開店」と「閉店」のルール (lifespan)
+# サーバーの「開店」と「閉店」のルール (lifespan)
 # ==========================================
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 【開店時（uvicorn起動時）にやること】
-    init_db() # データベースの準備
+    init_db()
     scheduler = BackgroundScheduler()
-    # 専属の監視員に「execute_spotify_check を 1分おきに実行しろ」と命令
     scheduler.add_job(execute_spotify_check, 'interval', minutes=1)
     scheduler.start()
     print("⏰ バックグラウンド・タイマーを起動しました。1分おきに自動チェックします。")
 
-    yield # ここでWebサーバーがお客さんを待ち続ける（稼働中）
+    yield
 
-    # 【閉店時（Ctrl+Cで停止した時）にやること】
     scheduler.shutdown()
     print("⏰ バックグラウンド・タイマーを安全に停止しました。")
 
-# FastAPIの起動時に、上記のルール(lifespan)を適用する
+# FastAPIアプリケーションの立ち上げ（Jinja2は完全に消去された）
 app = FastAPI(lifespan=lifespan)
-templates = Jinja2Templates(directory="templates")
 
 # ==========================================
-# APIエンドポイント（ルーティング）
+# データ受け取り用の関所（Pydanticモデル）
 # ==========================================
+class ArtistRequest(BaseModel):
+    artist_name: str
 
-@app.get("/")
-def read_root(request: Request):
-    conn = sqlite3.connect('notifier.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT name FROM artists")
-    saved_artists = cursor.fetchall()
-    conn.close()
-
-    artist_names = [row[0] for row in saved_artists]
-    return templates.TemplateResponse(request=request, name="index.html", context={"artist_names": artist_names})
-
+# ==========================================
+# APIエンドポイント（全てJSONを返すRESTful API）
+# ==========================================
 @app.post("/api/register")
-def register_artist(request: Request, artist_name: str = Form(...)):
+def register_artist(req: ArtistRequest):
     sp = get_spotify_client()
     try:
-        search_result = sp.search(q=artist_name, type='artist', limit=1)
+        search_result = sp.search(q=req.artist_name, type='artist', limit=1)
         artists_found = search_result['artists']['items']
+        
         if not artists_found:
-            return templates.TemplateResponse(request=request, name="result.html", context={"message": f"「{artist_name}」に一致するアーティストが見つかりませんでした。"})
+            return {"status": "error", "message": f"「{req.artist_name}」が見つかりませんでした。"}
             
         exact_artist = artists_found[0]
         artist_id = exact_artist['id']
         formal_name = exact_artist['name']
+        
     except Exception as e:
-        return templates.TemplateResponse(request=request, name="result.html", context={"message": f"Spotify検索中にエラーが発生しました: {e}"})
+        return {"status": "error", "message": f"Spotify検索エラー: {str(e)}"}
 
     conn = sqlite3.connect('notifier.db')
     cursor = conn.cursor()
@@ -153,14 +142,11 @@ def register_artist(request: Request, artist_name: str = Form(...)):
     finally:
         conn.close()
     
-    return templates.TemplateResponse(request=request, name="result.html", context={"message": msg})
+    return {"status": "success", "message": msg}
 
-# ★変更：ボタンから呼ばれた時も、独立したコアロジックを使い回す
 @app.post("/api/check")
-def run_check(request: Request):
-    # ボタンが押されたら、コアロジックを実行し、その結果の文字列を受け取る
+def run_check():
     result_message = execute_spotify_check()
-    # 受け取った結果を result.html に埋め込んでブラウザに返す
-    return templates.TemplateResponse(request=request, name="result.html", context={"message": result_message})
+    return {"status": "success", "message": result_message}
 
 
