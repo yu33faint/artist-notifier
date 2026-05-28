@@ -2,6 +2,7 @@ import os
 import sqlite3
 import requests
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware # 追加
 from dotenv import load_dotenv
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
@@ -95,19 +96,20 @@ async def lifespan(app: FastAPI):
     scheduler = BackgroundScheduler()
     scheduler.add_job(execute_spotify_check, 'interval', minutes=1)
     scheduler.start()
-    print("⏰ バックグラウンド・タイマーを起動しました。1分おきに自動チェックします。")
-
+    print("⏰ バックグラウンド・タイマーを起動しました。")
     yield
-
     scheduler.shutdown()
-    print("⏰ バックグラウンド・タイマーを安全に停止しました。")
 
-# FastAPIアプリケーションの立ち上げ（Jinja2は完全に消去された）
 app = FastAPI(lifespan=lifespan)
 
-# ==========================================
-# データ受け取り用の関所（Pydanticモデル）
-# ==========================================
+# CORSの設定 (Reactのデフォルトポート5173からのアクセスを許可)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 class ArtistRequest(BaseModel):
     artist_name: str
 
@@ -149,4 +151,13 @@ def run_check():
     result_message = execute_spotify_check()
     return {"status": "success", "message": result_message}
 
-
+# 【新規追加】React側でリストを表示するためのエンドポイント
+@app.get("/api/artists")
+def get_artists():
+    conn = sqlite3.connect('notifier.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM artists")
+    # リスト形式で名前だけを抽出して返す
+    artists = [row[0] for row in cursor.fetchall()] 
+    conn.close()
+    return {"status": "success", "artists": artists}

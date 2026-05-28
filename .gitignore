@@ -1,5 +1,16 @@
+# セキュリティ関連（絶対に隠す）
 .env
+
+# データベース（ローカルのデータなので隠す）
 notifier.db
+*.sqlite3
+
+# Python関連の不要なファイル
 __pycache__/
-.cache
 .venv/
+*.pyc
+
+# React(Node.js)関連の不要なファイル
+frontend/node_modules/
+
+.cache

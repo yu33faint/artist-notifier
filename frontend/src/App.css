@@ -1,0 +1,54 @@
+/* frontend/src/App.css の中身 */
+body { 
+  font-family: sans-serif; 
+  text-align: center; 
+  margin-top: 30px; 
+  background-color: #f0f8ff; 
+}
+.container { 
+  max-width: 600px; 
+  margin: 0 auto; 
+  background: white; 
+  padding: 20px; 
+  border-radius: 10px; 
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+}
+input[type="text"] { 
+  padding: 10px; 
+  width: 70%; 
+  font-size: 16px; 
+  margin-bottom: 10px; 
+}
+button { 
+  padding: 10px 20px; 
+  font-size: 16px; 
+  cursor: pointer; 
+  border: none; 
+  border-radius: 5px; 
+  color: white; 
+}
+.btn-blue { 
+  background-color: #007BFF; 
+}
+.btn-green { 
+  background-color: #06C755; 
+  margin-top: 20px; 
+  width: 100%; 
+  font-size: 20px; 
+  padding: 15px; 
+}
+ul { 
+  text-align: left; 
+  background: #eee; 
+  padding: 15px 30px; 
+  border-radius: 5px; 
+}
+.message-box { 
+  font-size: 16px; 
+  margin: 20px 0; 
+  padding: 10px; 
+  background-color: #e2f3e5; 
+  color: #28a745; 
+  border-radius: 5px; 
+  font-weight: bold;
+}
