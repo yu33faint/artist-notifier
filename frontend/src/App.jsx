@@ -27,11 +27,11 @@ function App() {
     e.preventDefault(); // 画面の再読み込みを防ぐ
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/api/register', {
+        const response = await fetch('http://localhost:8000/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ artist_name: newArtist })
-      });
+        });
       const data = await response.json();
       setMessage(data.message);
       setNewArtist(''); // 入力欄をクリア

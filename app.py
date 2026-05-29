@@ -69,7 +69,7 @@ def execute_spotify_check():
 
             cursor.execute("SELECT id FROM releases WHERE id = ?", (release_id,))
             if not cursor.fetchone():
-                cursor.execute("INSERT INTO releases (id, name, artist) VALUES (?, ?, ?)", (release_id, release_name, target_name))
+                cursor.execute("INSERT INTO releases (id, name, artist) VALUES (?, ?, ?)", (release_id,        release_name, target_name))
                 new_releases.append(f"【{target_name}】\n『{release_name}』\n{release_url}")
         except Exception as e:
             print(f"エラー発生 ({target_name}): {e}")
