@@ -1,5 +1,6 @@
 import os
 import sqlite3
+from backend.app.database import get_db_connetion, init_db
 import requests
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware # 追加
@@ -30,7 +31,7 @@ def get_spotify_client():
     return spotipy.Spotify(client_credentials_manager=manager)
 
 def init_db():
-    conn = sqlite3.connect('notifier.db')
+    conn = get_db_connetion()
     cursor = conn.cursor()
     cursor.execute('''CREATE TABLE IF NOT EXISTS artists (id TEXT PRIMARY KEY, name TEXT)''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS releases (id TEXT PRIMARY KEY, name TEXT, artist TEXT)''')
@@ -43,7 +44,7 @@ def init_db():
 def execute_spotify_check():
     print("🤖 [自動実行] Spotifyの新着チェックを開始します...")
     
-    conn = sqlite3.connect('notifier.db')
+    conn = get_db_connetion()
     cursor = conn.cursor()
     cursor.execute("SELECT id, name FROM artists")
     artists = cursor.fetchall()
@@ -133,7 +134,7 @@ def register_artist(req: ArtistRequest):
     except Exception as e:
         return {"status": "error", "message": f"Spotify検索エラー: {str(e)}"}
 
-    conn = sqlite3.connect('notifier.db')
+    conn = get_db_connetion()
     cursor = conn.cursor()
     try:
         cursor.execute("INSERT INTO artists (id, name) VALUES (?, ?)", (artist_id, formal_name))
@@ -154,7 +155,7 @@ def run_check():
 # 【新規追加】React側でリストを表示するためのエンドポイント
 @app.get("/api/artists")
 def get_artists():
-    conn = sqlite3.connect('notifier.db')
+    conn = get_db_connetion()
     cursor = conn.cursor()
     cursor.execute("SELECT name FROM artists")
     # リスト形式で名前だけを抽出して返す
