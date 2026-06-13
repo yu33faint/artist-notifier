@@ -82,7 +82,9 @@ function App() {
       <h3>現在の監視リスト</h3>
       <ul>
         {artists.length > 0 ? (
-          artists.map((name, index) => <li key={index}>{name}</li>)
+          artists.map((artist) => (
+            <li key={artist.id}>{artist.name}</li>
+          ))
         ) : (
           <li>まだ誰も登録されていません。</li>
         )}
