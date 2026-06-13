@@ -1,25 +1,14 @@
-import os
-from backend.app.database import get_db_connection, init_db
-import requests
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware 
 from dotenv import load_dotenv
 from apscheduler.schedulers.background import BackgroundScheduler
 from contextlib import asynccontextmanager
+from backend.app.database import get_db_connection, init_db
 from backend.app.services.spotify import get_spotify_client
 from backend.app.api.artists import router as artists_router
+from backend.app.services.line_notification import send_line_message
 
 load_dotenv()
-
-# ==========================================
-# 共通ツール
-# ==========================================
-def send_line_message(notification_text):
-    url = 'https://api.line.me/v2/bot/message/push'
-    token = os.getenv('LINE_CHANNEL_ACCESS_TOKEN')
-    headers = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'}
-    data = {'to': os.getenv('LINE_USER_ID'), 'messages': [{'type': 'text', 'text': notification_text}]}
-    requests.post(url, headers=headers, json=data)
 
 # ==========================================
 # コアロジック（タイマーからもAPIからも呼ばれる）
