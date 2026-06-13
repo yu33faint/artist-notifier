@@ -46,8 +46,15 @@ def get_artists():
     cursor = conn.cursor()
 
     try:
-        cursor.execute("SELECT name FROM artists")
-        artists = [row[0] for row in cursor.fetchall()]
+        cursor.execute("SELECT id, name FROM artists")
+        artists = [
+            {
+                "id": row[0],
+                "name": row[1]
+            }
+            for row in cursor.fetchall()
+        ]
+
     finally:
         conn.close()
 
