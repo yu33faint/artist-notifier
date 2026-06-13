@@ -22,4 +22,9 @@ def send_line_message(notification_text: str) -> None:
         ]
     }
     
-    requests.post(url, headers=headers, json=data)
+    response = requests.post(url,
+                             headers=headers,
+                             json=data,
+                             timeout=10)
+    
+    response.raise_for_status()
