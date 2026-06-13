@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import './App.css'; // 既存のCSSをここに移動させます
+import './App.css';
 
 function App() {
   const [artists, setArtists] = useState([]);
@@ -36,6 +36,24 @@ function App() {
       setMessage(data.message);
       setNewArtist(''); // 入力欄をクリア
       fetchArtists();   // リストを最新状態に更新
+    } catch (error) {
+      setMessage("通信エラーが発生しました。");
+    }
+    setIsLoading(false);
+  };
+
+  //アーティスト削除処理
+  const handleDelete = async (artistId) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`http://localhost:8000/api/artists/${artistId}`,
+        {
+          method: 'DELETE'
+        }
+      );
+      const data = await response.json();
+      setMessage(data.message);
+      fetchArtists(); // リストを最新状態に更新
     } catch (error) {
       setMessage("通信エラーが発生しました。");
     }
@@ -82,7 +100,19 @@ function App() {
       <h3>現在の監視リスト</h3>
       <ul>
         {artists.length > 0 ? (
-          artists.map((name, index) => <li key={index}>{name}</li>)
+          artists.map((artist) => (
+            <li key={artist.id}>
+              <span>{artist.name}</span>
+              <button
+                type="button"
+                className="btn-delete"
+                onClick={() => handleDelete(artist.id)}
+                disabled={isLoading}
+              >
+                削除
+              </button>
+            </li>
+          ))
         ) : (
           <li>まだ誰も登録されていません。</li>
         )}
