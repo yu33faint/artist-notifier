@@ -1,15 +1,13 @@
 import os
-import sqlite3
-from backend.app.database import get_db_connetion, init_db
+from backend.app.database import get_db_connection, init_db
 import requests
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware # 追加
+from fastapi.middleware.cors import CORSMiddleware 
 from dotenv import load_dotenv
-import spotipy
-from spotipy.oauth2 import SpotifyClientCredentials
 from apscheduler.schedulers.background import BackgroundScheduler
 from contextlib import asynccontextmanager
-from pydantic import BaseModel
+from backend.app.services.spotify import get_spotify_client
+from backend.app.api.artists import router as artists_router
 
 load_dotenv()
 
@@ -23,28 +21,13 @@ def send_line_message(notification_text):
     data = {'to': os.getenv('LINE_USER_ID'), 'messages': [{'type': 'text', 'text': notification_text}]}
     requests.post(url, headers=headers, json=data)
 
-def get_spotify_client():
-    manager = SpotifyClientCredentials(
-        client_id=os.getenv("SPOTIPY_CLIENT_ID"),
-        client_secret=os.getenv("SPOTIPY_CLIENT_SECRET")
-    )
-    return spotipy.Spotify(client_credentials_manager=manager)
-
-def init_db():
-    conn = get_db_connetion()
-    cursor = conn.cursor()
-    cursor.execute('''CREATE TABLE IF NOT EXISTS artists (id TEXT PRIMARY KEY, name TEXT)''')
-    cursor.execute('''CREATE TABLE IF NOT EXISTS releases (id TEXT PRIMARY KEY, name TEXT, artist TEXT)''')
-    conn.commit()
-    conn.close()
-
 # ==========================================
 # コアロジック（タイマーからもAPIからも呼ばれる）
 # ==========================================
 def execute_spotify_check():
     print("🤖 [自動実行] Spotifyの新着チェックを開始します...")
     
-    conn = get_db_connetion()
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT id, name FROM artists")
     artists = cursor.fetchall()
@@ -102,6 +85,7 @@ async def lifespan(app: FastAPI):
     scheduler.shutdown()
 
 app = FastAPI(lifespan=lifespan)
+app.include_router(artists_router)
 
 # CORSの設定 (Reactのデフォルトポート5173からのアクセスを許可)
 app.add_middleware(
@@ -111,54 +95,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-class ArtistRequest(BaseModel):
-    artist_name: str
-
-# ==========================================
-# APIエンドポイント（全てJSONを返すRESTful API）
-# ==========================================
-@app.post("/api/register")
-def register_artist(req: ArtistRequest):
-    sp = get_spotify_client()
-    try:
-        search_result = sp.search(q=req.artist_name, type='artist', limit=1)
-        artists_found = search_result['artists']['items']
-        
-        if not artists_found:
-            return {"status": "error", "message": f"「{req.artist_name}」が見つかりませんでした。"}
-            
-        exact_artist = artists_found[0]
-        artist_id = exact_artist['id']
-        formal_name = exact_artist['name']
-        
-    except Exception as e:
-        return {"status": "error", "message": f"Spotify検索エラー: {str(e)}"}
-
-    conn = get_db_connetion()
-    cursor = conn.cursor()
-    try:
-        cursor.execute("INSERT INTO artists (id, name) VALUES (?, ?)", (artist_id, formal_name))
-        conn.commit()
-        msg = f"Spotifyから「{formal_name}」を発見！監視リストに登録しました。"
-    except sqlite3.IntegrityError:
-        msg = f"「{formal_name}」は既に登録されています。"
-    finally:
-        conn.close()
-    
-    return {"status": "success", "message": msg}
 
 @app.post("/api/check")
 def run_check():
     result_message = execute_spotify_check()
     return {"status": "success", "message": result_message}
-
-# 【新規追加】React側でリストを表示するためのエンドポイント
-@app.get("/api/artists")
-def get_artists():
-    conn = get_db_connetion()
-    cursor = conn.cursor()
-    cursor.execute("SELECT name FROM artists")
-    # リスト形式で名前だけを抽出して返す
-    artists = [row[0] for row in cursor.fetchall()] 
-    conn.close()
-    return {"status": "success", "artists": artists}
