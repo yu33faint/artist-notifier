@@ -62,3 +62,29 @@ def get_artists():
         "status": "success",
         "artists": artists,
     }
+
+@router.delete("/artists/{artist_id}")
+def delete_artist(artist_id: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            "DELETE FROM artists WHERE id = ?",
+            (artist_id,)
+        )
+        conn.commit()
+        deleted_count = cursor.rowcount
+    finally:
+        conn.close()
+
+    if deleted_count == 0:
+        return {
+            "status": "error",
+            "message": "指定されたアーティストは登録されていません。"
+        }
+    else:
+        return {
+            "status": "success",
+            "message": "アーティストを監視リストから削除しました。"
+        }
