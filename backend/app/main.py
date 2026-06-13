@@ -4,14 +4,13 @@ from dotenv import load_dotenv
 from apscheduler.schedulers.background import BackgroundScheduler
 from contextlib import asynccontextmanager
 from backend.app.database import init_db
-from backend.app.api.artists import router as artists_router
 from backend.app.services.release_checker import execute_spotify_check
+from backend.app.api.artists import router as artists_router
+from backend.app.api.checks import router as checks_router
+
 
 load_dotenv()
 
-# ==========================================
-# サーバーの「開店」と「閉店」のルール (lifespan)
-# ==========================================
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
@@ -24,6 +23,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(artists_router)
+app.include_router(checks_router)
 
 # CORSの設定 (Reactのデフォルトポート5173からのアクセスを許可)
 app.add_middleware(
@@ -33,8 +33,3 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.post("/api/check")
-def run_check():
-    result_message = execute_spotify_check()
-    return {"status": "success", "message": result_message}
