@@ -6,5 +6,5 @@ router = APIRouter(prefix="/api", tags=["checks"])
 @router.post("/check")
 def run_check():
     result_message = execute_spotify_check()
-    return {"status": "success", 
+    return {"status": "success",
             "message": result_message}
