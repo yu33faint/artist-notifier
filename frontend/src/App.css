@@ -52,3 +52,16 @@ ul {
   border-radius: 5px; 
   font-weight: bold;
 }
+
+ul li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.btn-delete {
+  padding: 6px 12px;
+  background-color: #dc3545;
+  font-size: 14px;
+}

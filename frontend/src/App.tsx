@@ -1,29 +1,43 @@
-import { useState, useEffect } from 'react';
-import './App.css'; // 既存のCSSをここに移動させます
+import { useState, useEffect, type SubmitEvent } from 'react';
+import './App.css';
+import type {
+  Artist,
+  ArtistsResponse,
+  MessageResponse
+} from './types';
 
 function App() {
-  const [artists, setArtists] = useState([]);
+  const [artists, setArtists] = useState<Artist[]>([]);
   const [newArtist, setNewArtist] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // 画面の初回読み込み時に登録済みアーティスト一覧を取得
-  useEffect(() => {
-    fetchArtists();
-  }, []);
-
   const fetchArtists = async () => {
     try {
       const response = await fetch('http://localhost:8000/api/artists');
-      const data = await response.json();
+      const data: ArtistsResponse = await response.json();
       setArtists(data.artists);
     } catch (error) {
       console.error("アーティストの取得に失敗しました", error);
     }
   };
 
+  // 画面の初回読み込み時に登録済みアーティスト一覧を取得
+  useEffect(() => {
+    const loadArtists = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/artists');
+        const data: ArtistsResponse = await response.json();
+        setArtists(data.artists);
+      } catch (error) {
+        console.error("アーティストの取得に失敗しました", error);
+      }
+    };
+    void loadArtists();
+  }, []);
+
   // アーティスト登録処理
-  const handleRegister = async (e) => {
+  const handleRegister = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault(); // 画面の再読み込みを防ぐ
     setIsLoading(true);
     try {
@@ -32,11 +46,29 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ artist_name: newArtist })
         });
-      const data = await response.json();
+      const data: MessageResponse = await response.json();
       setMessage(data.message);
       setNewArtist(''); // 入力欄をクリア
       fetchArtists();   // リストを最新状態に更新
-    } catch (error) {
+    } catch {
+      setMessage("通信エラーが発生しました。");
+    }
+    setIsLoading(false);
+  };
+
+  //アーティスト削除処理
+  const handleDelete = async (artistId: string) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`http://localhost:8000/api/artists/${artistId}`,
+        {
+          method: 'DELETE'
+        }
+      );
+      const data: MessageResponse = await response.json();
+      setMessage(data.message);
+      fetchArtists(); // リストを最新状態に更新
+    } catch {
       setMessage("通信エラーが発生しました。");
     }
     setIsLoading(false);
@@ -49,9 +81,9 @@ function App() {
       const response = await fetch('http://localhost:8000/api/check', {
         method: 'POST'
       });
-      const data = await response.json();
+      const data: MessageResponse = await response.json();
       setMessage(data.message);
-    } catch (error) {
+    } catch {
       setMessage("通信エラーが発生しました。");
     }
     setIsLoading(false);
@@ -82,7 +114,19 @@ function App() {
       <h3>現在の監視リスト</h3>
       <ul>
         {artists.length > 0 ? (
-          artists.map((name, index) => <li key={index}>{name}</li>)
+          artists.map((artist) => (
+            <li key={artist.id}>
+              <span>{artist.name}</span>
+              <button
+                type="button"
+                className="btn-delete"
+                onClick={() => handleDelete(artist.id)}
+                disabled={isLoading}
+              >
+                削除
+              </button>
+            </li>
+          ))
         ) : (
           <li>まだ誰も登録されていません。</li>
         )}
