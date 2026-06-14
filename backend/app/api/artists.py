@@ -1,11 +1,8 @@
-import sqlite3
-
 from fastapi import APIRouter
 
-from backend.app.database import get_db_connection
 from backend.app.schemas.artist import ArtistRequest
 from backend.app.services.spotify import search_artist
-from backend.app.repositories.artists import get_all_artists
+from backend.app.repositories.artists import get_all_artists, create_artist
 
 
 router = APIRouter(prefix="/api", tags=["artists"])
@@ -24,17 +21,13 @@ def register_artist(req: ArtistRequest):
             "status": "error",
             "message": f"「{req.artist_name}」が見つかりませんでした。"
         }
-    conn = get_db_connection()
-    cursor = conn.cursor()
 
-    try:
-        cursor.execute("INSERT INTO artists (id, name) VALUES (?, ?)", (artist["id"], artist["name"]))
-        conn.commit()
-        message = f"「{artist['name']}」を監視リストに追加しました。"
-    except sqlite3.IntegrityError:
+    was_created = create_artist(artist["id"], artist["name"])
+
+    if was_created:
+        message = f"「{artist['name']}」を監視リストに登録しました。"
+    else:
         message = f"「{artist['name']}」は既に監視リストに登録されています。"
-    finally:
-        conn.close()
 
     return {
         "status": "success",
