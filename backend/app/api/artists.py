@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from backend.app.database import get_db_connection
 from backend.app.schemas.artist import ArtistRequest
 from backend.app.services.spotify import search_artist
+from backend.app.repositories.artists import get_all_artists
 
 
 router = APIRouter(prefix="/api", tags=["artists"])
@@ -42,25 +43,9 @@ def register_artist(req: ArtistRequest):
 
 @router.get("/artists")
 def get_artists():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    try:
-        cursor.execute("SELECT id, name FROM artists")
-        artists = [
-            {
-                "id": row[0],
-                "name": row[1]
-            }
-            for row in cursor.fetchall()
-        ]
-
-    finally:
-        conn.close()
-
     return {
         "status": "success",
-        "artists": artists,
+        "artists": get_all_artists(),
     }
 
 @router.delete("/artists/{artist_id}")
