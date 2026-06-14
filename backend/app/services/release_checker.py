@@ -1,19 +1,19 @@
 from backend.app.database import get_db_connection
 from backend.app.services.line_notification import send_line_message
 from backend.app.services.spotify import get_spotify_client
+from backend.app.repositories.artists import get_all_artist_records
 
 def execute_spotify_check():
     print("Spotifyの新着チェックを開始します...")
     
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, name FROM artists")
-    artists = cursor.fetchall()
+    artists = get_all_artist_records()
     
     if not artists:
         print("🤖 [結果] 監視リストが空のためチェックをスキップします。")
-        conn.close()
         return "アーティストが1人も登録されていません。"
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
 
     sp = get_spotify_client()
     new_releases = []

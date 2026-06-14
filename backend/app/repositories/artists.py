@@ -46,3 +46,13 @@ def delete_artist_by_id(artist_id: str) -> bool:
         return cursor.rowcount > 0
     finally:
         conn.close()
+
+def get_all_artist_records():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("SELECT id, name FROM artists")
+        return cursor.fetchall()
+    finally:
+        conn.close()
