@@ -1,10 +1,10 @@
-import sqlite3
-
 from fastapi import APIRouter
 
-from backend.app.database import get_db_connection
 from backend.app.schemas.artist import ArtistRequest
 from backend.app.services.spotify import search_artist
+from backend.app.repositories.artists import (get_all_artists,
+                                              create_artist,
+                                              delete_artist_by_id)
 
 
 router = APIRouter(prefix="/api", tags=["artists"])
@@ -23,17 +23,13 @@ def register_artist(req: ArtistRequest):
             "status": "error",
             "message": f"「{req.artist_name}」が見つかりませんでした。"
         }
-    conn = get_db_connection()
-    cursor = conn.cursor()
 
-    try:
-        cursor.execute("INSERT INTO artists (id, name) VALUES (?, ?)", (artist["id"], artist["name"]))
-        conn.commit()
-        message = f"「{artist['name']}」を監視リストに追加しました。"
-    except sqlite3.IntegrityError:
+    was_created = create_artist(artist["id"], artist["name"])
+
+    if was_created:
+        message = f"「{artist['name']}」を監視リストに登録しました。"
+    else:
         message = f"「{artist['name']}」は既に監視リストに登録されています。"
-    finally:
-        conn.close()
 
     return {
         "status": "success",
@@ -42,43 +38,16 @@ def register_artist(req: ArtistRequest):
 
 @router.get("/artists")
 def get_artists():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    try:
-        cursor.execute("SELECT id, name FROM artists")
-        artists = [
-            {
-                "id": row[0],
-                "name": row[1]
-            }
-            for row in cursor.fetchall()
-        ]
-
-    finally:
-        conn.close()
-
     return {
         "status": "success",
-        "artists": artists,
+        "artists": get_all_artists(),
     }
 
 @router.delete("/artists/{artist_id}")
 def delete_artist(artist_id: str):
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    was_deleted = delete_artist_by_id(artist_id)
 
-    try:
-        cursor.execute(
-            "DELETE FROM artists WHERE id = ?",
-            (artist_id,)
-        )
-        conn.commit()
-        deleted_count = cursor.rowcount
-    finally:
-        conn.close()
-
-    if deleted_count == 0:
+    if not was_deleted:
         return {
             "status": "error",
             "message": "指定されたアーティストは登録されていません。"

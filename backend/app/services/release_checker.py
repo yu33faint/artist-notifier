@@ -1,19 +1,18 @@
-from backend.app.database import get_db_connection
 from backend.app.services.line_notification import send_line_message
 from backend.app.services.spotify import get_spotify_client
+from backend.app.repositories.artists import get_all_artist_records
+from backend.app.repositories.releases import get_all_release_ids, save_releases
 
 def execute_spotify_check():
     print("Spotifyの新着チェックを開始します...")
     
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, name FROM artists")
-    artists = cursor.fetchall()
+    artists = get_all_artist_records()
     
     if not artists:
         print("🤖 [結果] 監視リストが空のためチェックをスキップします。")
-        conn.close()
         return "アーティストが1人も登録されていません。"
+
+    notified_release_ids = get_all_release_ids()
 
     sp = get_spotify_client()
     new_releases = []
@@ -30,8 +29,7 @@ def execute_spotify_check():
             release_name = latest_release['name']
             release_url = latest_release['external_urls']['spotify']
 
-            cursor.execute("SELECT id FROM releases WHERE id = ?", (release_id,))
-            if not cursor.fetchone():
+            if release_id not in notified_release_ids:
                 new_releases.append(f"【{target_name}】\n『{release_name}』\n{release_url}")
                 new_release_records.append((release_id, release_name, target_name))
 
@@ -41,21 +39,12 @@ def execute_spotify_check():
 
     if new_releases:
         message_text = "🔥新着アラート!!🔥\n\n" + "\n\n".join(new_releases)
-        try:
-            send_line_message(message_text)
-
-            cursor.executemany(
-                "INSERT INTO releases (id, name, artist) VALUES (?, ?, ?)",
-                new_release_records
-            )
-            conn.commit()
-        finally:
-            conn.close()
+        send_line_message(message_text)
+        save_releases(new_release_records)
 
         print(f"🤖 [通知完了] {len(new_releases)}件の新着をLINEに送りました。")
         return f"{len(new_releases)}件の新着をLINEに通知しました！"
     
     else:
-        conn.close()
         print("🤖 [結果] 新着はありませんでした。")
         return "全アーティストをチェックしましたが、新着はありませんでした。"
