@@ -12,11 +12,6 @@ function App() {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // 画面の初回読み込み時に登録済みアーティスト一覧を取得
-  useEffect(() => {
-    fetchArtists();
-  }, []);
-
   const fetchArtists = async () => {
     try {
       const response = await fetch('http://localhost:8000/api/artists');
@@ -26,6 +21,20 @@ function App() {
       console.error("アーティストの取得に失敗しました", error);
     }
   };
+
+  // 画面の初回読み込み時に登録済みアーティスト一覧を取得
+  useEffect(() => {
+    const loadArtists = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/artists');
+        const data: ArtistsResponse = await response.json();
+        setArtists(data.artists);
+      } catch (error) {
+        console.error("アーティストの取得に失敗しました", error);
+      }
+    };
+    void loadArtists();
+  }, []);
 
   // アーティスト登録処理
   const handleRegister = async (e: SubmitEvent<HTMLFormElement>) => {
@@ -41,7 +50,7 @@ function App() {
       setMessage(data.message);
       setNewArtist(''); // 入力欄をクリア
       fetchArtists();   // リストを最新状態に更新
-    } catch (error) {
+    } catch {
       setMessage("通信エラーが発生しました。");
     }
     setIsLoading(false);
@@ -59,7 +68,7 @@ function App() {
       const data: MessageResponse = await response.json();
       setMessage(data.message);
       fetchArtists(); // リストを最新状態に更新
-    } catch (error) {
+    } catch {
       setMessage("通信エラーが発生しました。");
     }
     setIsLoading(false);
@@ -74,7 +83,7 @@ function App() {
       });
       const data: MessageResponse = await response.json();
       setMessage(data.message);
-    } catch (error) {
+    } catch {
       setMessage("通信エラーが発生しました。");
     }
     setIsLoading(false);
