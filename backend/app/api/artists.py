@@ -2,7 +2,9 @@ from fastapi import APIRouter
 
 from backend.app.schemas.artist import ArtistRequest
 from backend.app.services.spotify import search_artist
-from backend.app.repositories.artists import get_all_artists, create_artist
+from backend.app.repositories.artists import (get_all_artists,
+                                              create_artist,
+                                              delete_artist_by_id)
 
 
 router = APIRouter(prefix="/api", tags=["artists"])
@@ -43,20 +45,9 @@ def get_artists():
 
 @router.delete("/artists/{artist_id}")
 def delete_artist(artist_id: str):
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    was_deleted = delete_artist_by_id(artist_id)
 
-    try:
-        cursor.execute(
-            "DELETE FROM artists WHERE id = ?",
-            (artist_id,)
-        )
-        conn.commit()
-        deleted_count = cursor.rowcount
-    finally:
-        conn.close()
-
-    if deleted_count == 0:
+    if not was_deleted:
         return {
             "status": "error",
             "message": "指定されたアーティストは登録されていません。"

@@ -32,3 +32,17 @@ def create_artist(artist_id: str, artist_name: str) -> bool:
         return False
     finally:
         conn.close()
+
+def delete_artist_by_id(artist_id: str) -> bool:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            "DELETE FROM artists WHERE id = ?",
+            (artist_id,),
+        )
+        conn.commit()
+        return cursor.rowcount > 0
+    finally:
+        conn.close()
