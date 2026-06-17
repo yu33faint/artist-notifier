@@ -1,9 +1,6 @@
-import sqlite3
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-DATABASE_PATH = "notifier.db"
 DATABASE_URL = "sqlite:///./notifier.db"
 
 engine = create_engine(
@@ -22,22 +19,8 @@ class Base(DeclarativeBase):
     pass
 
 
-def get_db_connection():
-    return sqlite3.connect(DATABASE_PATH)
+from backend.app.models import artist, release
+
 
 def init_db():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "CREATE TABLE IF NOT EXISTS artists "
-        "(id TEXT PRIMARY KEY, name TEXT)"
-    )
-
-    cursor.execute(
-        "CREATE TABLE IF NOT EXISTS releases "
-        "(id TEXT PRIMARY KEY, name TEXT, artist TEXT)"
-    )
-
-    conn.commit()
-    conn.close()
+    Base.metadata.create_all(bind=engine)
