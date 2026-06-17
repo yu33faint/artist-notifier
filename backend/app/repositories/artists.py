@@ -1,6 +1,7 @@
 import sqlite3
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from backend.app.database import SessionLocal, get_db_connection
 from backend.app.models.artist import Artist
@@ -23,20 +24,22 @@ def get_all_artists():
 
 
 def create_artist(artist_id: str, artist_name: str) -> bool:
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    session = SessionLocal()
 
     try:
-        cursor.execute(
-            "INSERT INTO artists (id, name) VALUES (?, ?)",
-            (artist_id, artist_name)
+        artist = Artist(
+            id=artist_id,
+            name=artist_name,
         )
-        conn.commit()
+
+        session.add(artist)
+        session.commit()
         return True
-    except sqlite3.IntegrityError:
+    except IntegrityError:
+        session.rollback()
         return False
     finally:
-        conn.close()
+        session.close()
 
 
 def delete_artist_by_id(artist_id: str) -> bool:
@@ -52,6 +55,7 @@ def delete_artist_by_id(artist_id: str) -> bool:
         return cursor.rowcount > 0
     finally:
         conn.close()
+
 
 def get_all_artist_records():
     conn = get_db_connection()
