@@ -1,6 +1,6 @@
 import sqlite3
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 
 from backend.app.database import SessionLocal, get_db_connection
@@ -43,18 +43,16 @@ def create_artist(artist_id: str, artist_name: str) -> bool:
 
 
 def delete_artist_by_id(artist_id: str) -> bool:
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    session = SessionLocal()
 
     try:
-        cursor.execute(
-            "DELETE FROM artists WHERE id = ?",
-            (artist_id,),
+        result = session.execute(
+            delete(Artist).where(Artist.id == artist_id)
         )
-        conn.commit()
-        return cursor.rowcount > 0
+        session.commit()
+        return result.rowcount > 0
     finally:
-        conn.close()
+        session.close()
 
 
 def get_all_artist_records():
