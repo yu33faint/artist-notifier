@@ -15,7 +15,8 @@ React製の管理画面から、監視アーティストの登録・削除と、
 - APSchedulerによる1時間ごとの自動新着チェック
 - 管理画面からの手動新着チェック
 - LINE Messaging APIによる新着通知
-- SQLiteによる通知済みリリースの記録
+- SQLAlchemyを使用した監視アーティスト・通知済みリリースの記録
+- 環境変数によるデータベース接続URLの切り替え
 - LINE通知失敗時に次回のチェックで再通知する仕組み
 
 ## 技術スタック
@@ -25,6 +26,7 @@ React製の管理画面から、監視アーティストの登録・削除と、
 - Python
 - FastAPI
 - Pydantic
+- SQLAlchemy
 - APScheduler
 - Spotipy
 - SQLite
@@ -45,11 +47,13 @@ React製の管理画面から、監視アーティストの登録・削除と、
 
 ```text
 backend/app/
-├── api/        # FastAPIのエンドポイント
-├── schemas/    # リクエストデータの定義
-├── services/   # Spotify・LINE通知・新着確認処理
-├── database.py # SQLite接続と初期化
-└── main.py     # FastAPIアプリとスケジューラー
+├── api/           # FastAPIのエンドポイント
+├── models/        # SQLAlchemyのDBモデル
+├── repositories/  # DB操作を担当する層
+├── schemas/       # リクエストデータの定義
+├── services/      # Spotify・LINE通知・新着確認処理
+├── database.py    # SQLAlchemy接続とテーブル初期化
+└── main.py        # FastAPIアプリとスケジューラー
 
 frontend/src/
 ├── App.tsx     # 管理画面
@@ -60,6 +64,9 @@ frontend/src/
 バックグラウンドの自動チェックと、管理画面からの手動チェックは、
 同じ新着確認サービスを利用します。
 
+API層とサービス層からDB操作を分離し、repositories層でSQLAlchemyを使用してデータを操作しています。
+現在はSQLiteで動作し、PostgreSQLへ移行しやすい構成にしています。
+
 ## ローカル環境でのセットアップ
 
 ### 1. リポジトリをクローンする
@@ -68,6 +75,8 @@ frontend/src/
 git clone https://github.com/yu33faint/artist-notifier.git
 cd artist-notifier
 ```
+
+---
 
 ### 2. Python仮想環境を作成する
 
