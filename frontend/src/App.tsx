@@ -6,6 +6,8 @@ import type {
   MessageResponse
 } from './types';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
+
 function App() {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [newArtist, setNewArtist] = useState('');
@@ -14,7 +16,7 @@ function App() {
 
   const fetchArtists = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/artists');
+      const response = await fetch(`${API_BASE_URL}/api/artists`);
       const data: ArtistsResponse = await response.json();
       setArtists(data.artists);
     } catch (error) {
@@ -26,7 +28,7 @@ function App() {
   useEffect(() => {
     const loadArtists = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/artists');
+        const response = await fetch(`${API_BASE_URL}/api/artists`);
         const data: ArtistsResponse = await response.json();
         setArtists(data.artists);
       } catch (error) {
@@ -41,7 +43,7 @@ function App() {
     e.preventDefault(); // 画面の再読み込みを防ぐ
     setIsLoading(true);
     try {
-        const response = await fetch('http://localhost:8000/api/register', {
+        const response = await fetch(`${API_BASE_URL}/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ artist_name: newArtist })
@@ -60,7 +62,7 @@ function App() {
   const handleDelete = async (artistId: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`http://localhost:8000/api/artists/${artistId}`,
+      const response = await fetch(`${API_BASE_URL}/api/artists/${artistId}`,
         {
           method: 'DELETE'
         }
@@ -78,7 +80,7 @@ function App() {
   const handleCheck = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/api/check', {
+      const response = await fetch(`${API_BASE_URL}/api/check`, {
         method: 'POST'
       });
       const data: MessageResponse = await response.json();
