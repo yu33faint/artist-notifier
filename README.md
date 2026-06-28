@@ -30,6 +30,7 @@ React製の管理画面から、監視アーティストの登録・削除と、
 - APScheduler
 - Spotipy
 - SQLite
+- PostgreSQL
 
 ### Frontend
 
@@ -42,6 +43,10 @@ React製の管理画面から、監視アーティストの登録・削除と、
 
 - Spotify Web API
 - LINE Messaging API
+
+### Development
+
+- Docker Compose
 
 ## アーキテクチャ
 
@@ -65,7 +70,7 @@ frontend/src/
 同じ新着確認サービスを利用します。
 
 API層とサービス層からDB操作を分離し、repositories層でSQLAlchemyを使用してデータを操作しています。
-現在はSQLiteで動作し、PostgreSQLへ移行しやすい構成にしています。
+現在はSQLiteをデフォルトとして動作し、`DATABASE_URL`を変更することでPostgreSQLにも接続できる構成にしています。
 
 ## ローカル環境でのセットアップ
 
@@ -105,11 +110,22 @@ SPOTIPY_CLIENT_ID=SpotifyのクライアントID
 SPOTIPY_CLIENT_SECRET=Spotifyのクライアントシークレット
 LINE_CHANNEL_ACCESS_TOKEN=LINE Messaging APIのチャネルアクセストークン
 LINE_USER_ID=通知先のLINEユーザーID
+DATABASE_URL=postgresql+psycopg://artist_notifier:password@localhost:5432/artist_notifier
+VITE_API_BASE_URL=http://localhost:8000
 ```
 
 `.env`には秘密情報が含まれるため、Gitへコミットしないでください。
 
-### 4. フロントエンドの依存関係をインストールする
+### 4. PostgreSQLを使用する場合
+
+PostgreSQLを使用する場合は、Docker Composeで開発用DBを起動します。
+
+```powershell
+docker compose up -d db
+docker compose ps
+```
+
+### 5. フロントエンドの依存関係をインストールする
 
 ```powershell
 cd frontend
