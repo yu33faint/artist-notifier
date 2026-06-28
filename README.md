@@ -110,7 +110,7 @@ SPOTIPY_CLIENT_ID=SpotifyのクライアントID
 SPOTIPY_CLIENT_SECRET=Spotifyのクライアントシークレット
 LINE_CHANNEL_ACCESS_TOKEN=LINE Messaging APIのチャネルアクセストークン
 LINE_USER_ID=通知先のLINEユーザーID
-DATABASE_URL=postgresql+psycopg://artist_notifier:password@localhost:5432/artist_notifier
+DATABASE_URL=sqlite:///./notifier.db
 VITE_API_BASE_URL=http://localhost:8000
 ```
 
