@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:17
+    container_name: artist-notifier-db
+    environment:
+      POSTGRES_DB: artist_notifier
+      POSTGRES_USER: artist_notifier
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
