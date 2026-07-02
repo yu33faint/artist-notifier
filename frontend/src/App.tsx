@@ -51,7 +51,7 @@ function App() {
       const data: MessageResponse = await response.json();
       setMessage(data.message);
       setNewArtist(''); // 入力欄をクリア
-      fetchArtists();   // リストを最新状態に更新
+      await fetchArtists();   // リストを最新状態に更新
     } catch {
       setMessage("通信エラーが発生しました。");
     }
@@ -69,7 +69,7 @@ function App() {
       );
       const data: MessageResponse = await response.json();
       setMessage(data.message);
-      fetchArtists(); // リストを最新状態に更新
+      await fetchArtists(); // リストを最新状態に更新
     } catch {
       setMessage("通信エラーが発生しました。");
     }
