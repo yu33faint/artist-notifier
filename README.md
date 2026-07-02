@@ -128,7 +128,7 @@ docker compose ps
 
 ### 5. データベースマイグレーションを実行する
 
-PostgreSQLを使用する場合は、アプリケーション起動前にAlembicでマイグレーションを適用します。
+アプリケーション起動前にAlembicでマイグレーションを適用します。
 
 ```powershell
 .\.venv\Scripts\python.exe -m alembic upgrade head

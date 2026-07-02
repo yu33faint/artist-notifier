@@ -3,7 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from apscheduler.schedulers.background import BackgroundScheduler
 from contextlib import asynccontextmanager
-from backend.app.database import init_db
 from backend.app.services.release_checker import execute_spotify_check
 from backend.app.api.artists import router as artists_router
 from backend.app.api.checks import router as checks_router
@@ -13,7 +12,6 @@ load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()
     scheduler = BackgroundScheduler()
     scheduler.add_job(execute_spotify_check, 'interval', hours=1, max_instances=1, coalesce=True)
     scheduler.start()
