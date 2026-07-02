@@ -93,7 +93,7 @@ function App() {
 
   return (
     <div className="container">
-      <h1>🎸 コントロールパネル</h1>
+      <h1>🎸 Artist Release Monitor</h1>
       
       {/* メッセージ表示エリア */}
       {message && <div className="message-box">{message}</div>}
