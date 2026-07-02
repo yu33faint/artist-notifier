@@ -71,6 +71,7 @@ frontend/src/
 
 API層とサービス層からDB操作を分離し、repositories層でSQLAlchemyを使用してデータを操作しています。
 現在はSQLiteをデフォルトとして動作し、`DATABASE_URL`を変更することでPostgreSQLにも接続できる構成にしています。
+PostgreSQL利用時のテーブル作成・変更管理にはAlembicを使用します。
 
 ## ローカル環境でのセットアップ
 
@@ -125,7 +126,15 @@ docker compose up -d db
 docker compose ps
 ```
 
-### 5. フロントエンドの依存関係をインストールする
+### 5. データベースマイグレーションを実行する
+
+PostgreSQLを使用する場合は、アプリケーション起動前にAlembicでマイグレーションを適用します。
+
+```powershell
+.\.venv\Scripts\python.exe -m alembic upgrade head
+```
+
+### 6. フロントエンドの依存関係をインストールする
 
 ```powershell
 cd frontend
