@@ -1,4 +1,5 @@
 import os
+from contextlib import contextmanager
 
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
@@ -27,3 +28,12 @@ SessionLocal = sessionmaker(
 
 class Base(DeclarativeBase):
     pass
+
+
+@contextmanager
+def get_session():
+    session = SessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
