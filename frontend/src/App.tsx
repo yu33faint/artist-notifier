@@ -26,16 +26,7 @@ function App() {
 
   // 画面の初回読み込み時に登録済みアーティスト一覧を取得
   useEffect(() => {
-    const loadArtists = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/artists`);
-        const data: ArtistsResponse = await response.json();
-        setArtists(data.artists);
-      } catch (error) {
-        console.error("アーティストの取得に失敗しました", error);
-      }
-    };
-    void loadArtists();
+    void fetchArtists();
   }, []);
 
   // アーティスト登録処理
