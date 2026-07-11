@@ -5,13 +5,17 @@ from backend.app.database import get_session
 from backend.app.models.artist import Artist
 
 
-def get_all_artists():
+def get_all_artist_records() -> list[tuple[str, str]]:
     with get_session() as session:
         artists = session.scalars(select(Artist)).all()
-        return [
-            {"id": artist.id, "name": artist.name}
-            for artist in artists
-        ]
+        return [(artist.id, artist.name) for artist in artists]
+
+
+def get_all_artists() -> list[dict[str, str]]:
+    return [
+        {"id": artist_id, "name": artist_name}
+        for artist_id, artist_name in get_all_artist_records()
+    ]
 
 
 def create_artist(artist_id: str, artist_name: str) -> bool:
@@ -33,9 +37,3 @@ def delete_artist_by_id(artist_id: str) -> bool:
         )
         session.commit()
         return result.rowcount > 0
-
-
-def get_all_artist_records():
-    with get_session() as session:
-        artists = session.scalars(select(Artist)).all()
-        return [(artist.id, artist.name) for artist in artists]
