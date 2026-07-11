@@ -19,5 +19,10 @@ export default defineConfig([
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
+    rules: {
+      // React Compiler向けの静的解析ルール。Compiler未導入のため、fetch-on-mountのような
+      // 正当なeffectパターンにも過剰反応する。このプロジェクトでは無効化する。
+      'react-hooks/set-state-in-effect': 'off',
+    },
   },
 ])
