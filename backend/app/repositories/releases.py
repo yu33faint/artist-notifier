@@ -1,24 +1,17 @@
 from sqlalchemy import select
 
-from backend.app.database import SessionLocal
+from backend.app.database import get_session
 from backend.app.models.release import Release
 
 
 def get_all_release_ids() -> set[str]:
-    session = SessionLocal()
-
-    try:
+    with get_session() as session:
         release_ids = session.scalars(select(Release.id)).all()
-
         return set(release_ids)
-    finally:
-        session.close()
 
 
 def save_releases(releases: list[tuple[str, str, str]]) -> None:
-    session = SessionLocal()
-
-    try:
+    with get_session() as session:
         release_records = [
             Release(
                 id=release_id,
@@ -29,9 +22,8 @@ def save_releases(releases: list[tuple[str, str, str]]) -> None:
         ]
 
         session.add_all(release_records)
-        session.commit()
-    except Exception:
-        session.rollback()
-        raise
-    finally:
-        session.close()
+        try:
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
