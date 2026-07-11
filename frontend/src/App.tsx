@@ -29,57 +29,54 @@ function App() {
     void fetchArtists();
   }, []);
 
+  const runWithLoading = async (action: () => Promise<void>) => {
+    setIsLoading(true);
+    try {
+      await action();
+    } catch {
+      setMessage("通信エラーが発生しました。");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // アーティスト登録処理
   const handleRegister = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault(); // 画面の再読み込みを防ぐ
-    setIsLoading(true);
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/register`, {
+    await runWithLoading(async () => {
+      const response = await fetch(`${API_BASE_URL}/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ artist_name: newArtist })
-        });
+      });
       const data: MessageResponse = await response.json();
       setMessage(data.message);
-      setNewArtist(''); // 入力欄をクリア
-      await fetchArtists();   // リストを最新状態に更新
-    } catch {
-      setMessage("通信エラーが発生しました。");
-    }
-    setIsLoading(false);
+      setNewArtist('');
+      await fetchArtists();
+    });
   };
 
   //アーティスト削除処理
   const handleDelete = async (artistId: string) => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/artists/${artistId}`,
-        {
-          method: 'DELETE'
-        }
-      );
+    await runWithLoading(async () => {
+      const response = await fetch(`${API_BASE_URL}/api/artists/${artistId}`, {
+        method: 'DELETE'
+      });
       const data: MessageResponse = await response.json();
       setMessage(data.message);
-      await fetchArtists(); // リストを最新状態に更新
-    } catch {
-      setMessage("通信エラーが発生しました。");
-    }
-    setIsLoading(false);
+      await fetchArtists();
+    });
   };
 
   // 通知チェック実行処理
   const handleCheck = async () => {
-    setIsLoading(true);
-    try {
+    await runWithLoading(async () => {
       const response = await fetch(`${API_BASE_URL}/api/check`, {
         method: 'POST'
       });
       const data: MessageResponse = await response.json();
       setMessage(data.message);
-    } catch {
-      setMessage("通信エラーが発生しました。");
-    }
-    setIsLoading(false);
+    });
   };
 
   return (
