@@ -1,3 +1,5 @@
+from datetime import timezone
+
 from sqlalchemy import select
 
 from backend.app.database import get_session
@@ -21,7 +23,7 @@ def get_all_releases() -> list[dict]:
                 "name": release.name,
                 "artist": release.artist,
                 "url": release.url,
-                "notified_at": release.notified_at.isoformat(),
+                "notified_at": release.notified_at.replace(tzinfo=timezone.utc).isoformat(),
             }
             for release in releases
         ]
