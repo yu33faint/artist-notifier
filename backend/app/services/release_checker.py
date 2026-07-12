@@ -31,7 +31,7 @@ def execute_spotify_check():
 
             if release_id not in notified_release_ids:
                 new_releases.append(f"【{target_name}】\n『{release_name}』\n{release_url}")
-                new_release_records.append((release_id, release_name, target_name))
+                new_release_records.append((release_id, release_name, target_name, release_url))
 
         except Exception as e:
             print(f"エラー発生 ({target_name}): {e}")

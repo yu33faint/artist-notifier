@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from backend.app.services.release_checker import execute_spotify_check
 from backend.app.api.artists import router as artists_router
 from backend.app.api.checks import router as checks_router
+from backend.app.api.releases import router as releases_router
 
 
 load_dotenv()
@@ -22,6 +23,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.include_router(artists_router)
 app.include_router(checks_router)
+app.include_router(releases_router)
 
 # CORSの設定 (Reactのデフォルトポート5173からのアクセスを許可)
 app.add_middleware(

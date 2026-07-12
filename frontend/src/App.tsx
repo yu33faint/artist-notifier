@@ -5,6 +5,7 @@ import type {
   ArtistsResponse,
   MessageResponse
 } from './types';
+import ReleaseHistory from './ReleaseHistory';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
 
@@ -13,6 +14,7 @@ function App() {
   const [newArtist, setNewArtist] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [releaseHistoryKey, setReleaseHistoryKey] = useState(0);
 
   const fetchArtists = async () => {
     try {
@@ -76,24 +78,25 @@ function App() {
       });
       const data: MessageResponse = await response.json();
       setMessage(data.message);
+      setReleaseHistoryKey((key) => key + 1);
     });
   };
 
   return (
     <div className="container">
       <h1>🎸 Artist Release Monitor</h1>
-      
+
       {/* メッセージ表示エリア */}
       {message && <div className="message-box">{message}</div>}
 
       <h3>1. 監視アーティストの追加</h3>
       <form onSubmit={handleRegister}>
-        <input 
-          type="text" 
+        <input
+          type="text"
           value={newArtist}
           onChange={(e) => setNewArtist(e.target.value)}
-          placeholder="アーティスト名を入力 (例: Vaundy)" 
-          required 
+          placeholder="アーティスト名を入力 (例: Vaundy)"
+          required
           disabled={isLoading}
         />
         <button type="submit" className="btn-blue" disabled={isLoading}>
@@ -121,13 +124,17 @@ function App() {
           <li>まだ誰も登録されていません。</li>
         )}
       </ul>
-      
+
       <hr />
-      
+
       <h3>2. 新着チェックの実行</h3>
       <button onClick={handleCheck} className="btn-green" disabled={isLoading}>
         {isLoading ? '確認中...' : '全アーティストの通知チェックを実行'}
       </button>
+
+      <hr />
+
+      <ReleaseHistory key={releaseHistoryKey} />
     </div>
   );
 }
