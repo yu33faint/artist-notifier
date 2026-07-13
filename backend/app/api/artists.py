@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from backend.app.schemas.artist import ArtistRequest
 from backend.app.services.spotify import search_artist
@@ -14,15 +14,9 @@ def register_artist(req: ArtistRequest):
     try:
         artist = search_artist(req.artist_name)
     except Exception as error:
-        return {
-            "status": "error",
-            "message": f"Spotify検索エラー: {error}"
-        }
+        raise HTTPException(status_code=502, detail=f"Spotify検索エラー: {error}")
     if artist is None:
-        return {
-            "status": "error",
-            "message": f"「{req.artist_name}」が見つかりませんでした。"
-        }
+        raise HTTPException(status_code=404, detail=f"「{req.artist_name}」が見つかりませんでした。")
 
     was_created = create_artist(artist["id"], artist["name"])
 
@@ -48,12 +42,9 @@ def delete_artist(artist_id: str):
     was_deleted = delete_artist_by_id(artist_id)
 
     if not was_deleted:
-        return {
-            "status": "error",
-            "message": "指定されたアーティストは登録されていません。"
-        }
-    else:
-        return {
-            "status": "success",
-            "message": "アーティストを監視リストから削除しました。"
-        }
+        raise HTTPException(status_code=404, detail="指定されたアーティストは登録されていません。")
+
+    return {
+        "status": "success",
+        "message": "アーティストを監視リストから削除しました。"
+    }
