@@ -3,11 +3,17 @@ import './App.css';
 import type {
   Artist,
   ArtistsResponse,
-  MessageResponse
+  MessageResponse,
+  ErrorResponse
 } from './types';
 import ReleaseHistory from './ReleaseHistory';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
+
+async function extractMessage(response: Response): Promise<string> {
+  const data = await response.json();
+  return response.ok ? (data as MessageResponse).message : (data as ErrorResponse).detail;
+}
 
 function App() {
   const [artists, setArtists] = useState<Artist[]>([]);
@@ -51,10 +57,11 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ artist_name: newArtist })
       });
-      const data: MessageResponse = await response.json();
-      setMessage(data.message);
-      setNewArtist('');
-      await fetchArtists();
+      setMessage(await extractMessage(response));
+      if (response.ok) {
+        setNewArtist('');
+        await fetchArtists();
+      }
     });
   };
 
@@ -64,9 +71,10 @@ function App() {
       const response = await fetch(`${API_BASE_URL}/api/artists/${artistId}`, {
         method: 'DELETE'
       });
-      const data: MessageResponse = await response.json();
-      setMessage(data.message);
-      await fetchArtists();
+      setMessage(await extractMessage(response));
+      if (response.ok) {
+        await fetchArtists();
+      }
     });
   };
 
@@ -76,9 +84,10 @@ function App() {
       const response = await fetch(`${API_BASE_URL}/api/check`, {
         method: 'POST'
       });
-      const data: MessageResponse = await response.json();
-      setMessage(data.message);
-      setReleaseHistoryKey((key) => key + 1);
+      setMessage(await extractMessage(response));
+      if (response.ok) {
+        setReleaseHistoryKey((key) => key + 1);
+      }
     });
   };
 
