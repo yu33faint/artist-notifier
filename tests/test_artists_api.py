@@ -6,6 +6,7 @@ from backend.app.main import app
 from backend.app.repositories.artists import create_artist
 
 client = TestClient(app)
+AUTH_HEADERS = {"X-API-Key": "test-api-key"}
 
 
 def test_register_artist_success(use_test_database):
@@ -16,7 +17,7 @@ def test_register_artist_success(use_test_database):
     fake_spotify_client.search.return_value = fake_response
 
     with patch("backend.app.services.spotify.get_spotify_client", return_value=fake_spotify_client):
-        response = client.post("/api/register", json={"artist_name": "Vaundy"})
+        response = client.post("/api/register", json={"artist_name": "Vaundy"}, headers=AUTH_HEADERS)
 
     assert response.status_code == 200
     assert response.json()["status"] == "success"
@@ -28,7 +29,7 @@ def test_register_artist_not_found(use_test_database):
     fake_spotify_client.search.return_value = fake_response
 
     with patch("backend.app.services.spotify.get_spotify_client", return_value=fake_spotify_client):
-        response = client.post("/api/register", json={"artist_name": "存在しないはず"})
+        response = client.post("/api/register", json={"artist_name": "存在しないはず"}, headers=AUTH_HEADERS)
 
     assert response.status_code == 404
     assert "見つかりませんでした" in response.json()["detail"]
@@ -37,7 +38,7 @@ def test_register_artist_not_found(use_test_database):
 def test_get_artists_returns_registered_artists(use_test_database):
     create_artist("artist-1", "Vaundy")
 
-    response = client.get("/api/artists")
+    response = client.get("/api/artists", headers=AUTH_HEADERS)
 
     assert response.status_code == 200
     assert response.json()["artists"] == [{"id": "artist-1", "name": "Vaundy"}]
@@ -46,12 +47,12 @@ def test_get_artists_returns_registered_artists(use_test_database):
 def test_delete_artist_success(use_test_database):
     create_artist("artist-1", "Vaundy")
 
-    response = client.delete("/api/artists/artist-1")
+    response = client.delete("/api/artists/artist-1", headers=AUTH_HEADERS)
 
     assert response.status_code == 200
 
 
 def test_delete_artist_not_found(use_test_database):
-    response = client.delete("/api/artists/does-not-exist")
+    response = client.delete("/api/artists/does-not-exist", headers=AUTH_HEADERS)
 
     assert response.status_code == 404
