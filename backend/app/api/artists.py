@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from backend.app.auth import verify_api_key
 from backend.app.schemas.artist import ArtistRequest
 from backend.app.services.spotify import search_artist
 from backend.app.repositories.artists import (get_all_artists,
@@ -7,7 +8,7 @@ from backend.app.repositories.artists import (get_all_artists,
                                               delete_artist_by_id)
 
 
-router = APIRouter(prefix="/api", tags=["artists"])
+router = APIRouter(prefix="/api", tags=["artists"], dependencies=[Depends(verify_api_key)])
 
 @router.post("/register")
 def register_artist(req: ArtistRequest):
