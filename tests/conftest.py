@@ -24,3 +24,8 @@ def use_test_database(monkeypatch):
     yield
 
     test_engine.dispose()
+
+
+@pytest.fixture(autouse=True)
+def set_test_api_key(monkeypatch):
+    monkeypatch.setenv("API_KEY", "test-api-key")
