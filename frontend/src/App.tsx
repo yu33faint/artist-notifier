@@ -9,6 +9,8 @@ import type {
 import ReleaseHistory from './ReleaseHistory';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
+const API_KEY = import.meta.env.VITE_API_KEY;
+const AUTH_HEADERS = { "X-API-Key": API_KEY };
 
 async function extractMessage(response: Response): Promise<string> {
   const data = await response.json();
@@ -24,7 +26,7 @@ function App() {
 
   const fetchArtists = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/artists`);
+      const response = await fetch(`${API_BASE_URL}/api/artists`, {headers: AUTH_HEADERS});
       const data: ArtistsResponse = await response.json();
       setArtists(data.artists);
     } catch (error) {
@@ -54,7 +56,7 @@ function App() {
     await runWithLoading(async () => {
       const response = await fetch(`${API_BASE_URL}/api/register`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...AUTH_HEADERS },
         body: JSON.stringify({ artist_name: newArtist })
       });
       setMessage(await extractMessage(response));
@@ -69,7 +71,8 @@ function App() {
   const handleDelete = async (artistId: string) => {
     await runWithLoading(async () => {
       const response = await fetch(`${API_BASE_URL}/api/artists/${artistId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: AUTH_HEADERS
       });
       setMessage(await extractMessage(response));
       if (response.ok) {
@@ -82,7 +85,8 @@ function App() {
   const handleCheck = async () => {
     await runWithLoading(async () => {
       const response = await fetch(`${API_BASE_URL}/api/check`, {
-        method: 'POST'
+        method: 'POST',
+        headers: AUTH_HEADERS
       });
       setMessage(await extractMessage(response));
       if (response.ok) {
