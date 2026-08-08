@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import type { Release, ReleasesResponse } from './types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
+const API_KEY = import.meta.env.VITE_API_KEY;
+const AUTH_HEADERS = { "X-API-Key": API_KEY };
 
 function formatDate(isoString: string): string {
   return new Date(isoString).toLocaleString('ja-JP', {
@@ -19,7 +21,7 @@ function ReleaseHistory() {
   useEffect(() => {
     const loadReleases = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/releases`);
+        const response = await fetch(`${API_BASE_URL}/api/releases`, { headers: AUTH_HEADERS });
         const data: ReleasesResponse = await response.json();
         setReleases(data.releases);
       } catch (error) {
